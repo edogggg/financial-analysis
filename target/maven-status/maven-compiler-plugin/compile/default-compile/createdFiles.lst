@@ -1,0 +1,5 @@
+module-info.class
+org\openjfx\PrimaryController.class
+org\openjfx\SecondaryController.class
+org\openjfx\getApi.class
+org\openjfx\App.class
