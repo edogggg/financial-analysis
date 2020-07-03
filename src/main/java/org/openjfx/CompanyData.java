@@ -86,21 +86,36 @@ public class CompanyData {
                     metricVal = rounding(metricVal);
                     dataRow.put(key, String.valueOf(metricVal));
                 }
-                for (int i = 0; i < dataArray.length(); i++){
-                    int year = dataArray.optInt(Integer.parseInt(jSONObjectKeyYear));
-                    int quarter = dataArray.getInt(Integer.parseInt(jSONObjectKeyQuarter));
-                    JSONObject reportOBJ = dataArray.getJSONObject(Integer.parseInt(jSONObjectKeyReport));/*Possibly an issue*/
 
-                    JSONArray balanceSheet = reportOBJ.getJSONArray(balanceSheetKey);
-                    for (Object element : balanceSheet){
-                        element.toString()
-
-                        String metricVal = metric.optString(String.valueOf(element));
-                        dataRow.put(key, String.valueOf(metricVal));
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// ITERATE THROUGH THE ARRAY OBJECT AND RETRIEVE EACH OBJECTS KEYS/VALS ////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+                for (int i = 0; i < dataArray.length(); i++){ //change this to enhanced for loop if you wish
+                    JSONObject metricObject = dataArray.getJSONObject(i);
+                    JSONArray metricObjectKeys = metricObject.names();
+                    for (int j = 0; j < metricObjectKeys.length(); j++) { //change this to enhanced for loop if you wish
+                    String metKey = metricObjectKeys.getString (j); //this is the key (looped)
+                    String metValue = metricObject.getString (metKey); //this is the value (looped)
                     }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                    JSONArray cashFlow = reportOBJ.getJSONArray(cashFlowKey);
-                    JSONArray incomeStatement = reportOBJ.getJSONArray(incomeStatementKey);
+
+
+//                    int year = dataArray.optInt(Integer.parseInt(jSONObjectKeyYear));
+//                    int quarter = dataArray.getInt(Integer.parseInt(jSONObjectKeyQuarter));
+//                    JSONObject reportOBJ = dataArray.getJSONObject(Integer.parseInt(jSONObjectKeyReport));/*Possibly an issue*/
+//
+//                    JSONArray balanceSheet = reportOBJ.getJSONArray(balanceSheetKey);
+//                    for (Object element : balanceSheet){
+//                        element.toString()
+//
+//                        String metricVal = metric.optString(String.valueOf(element));
+//                        dataRow.put(key, String.valueOf(metricVal));
+//                    }
+
+//                    JSONArray cashFlow = reportOBJ.getJSONArray(cashFlowKey);
+//                    JSONArray incomeStatement = reportOBJ.getJSONArray(incomeStatementKey);
 
 
                 }
