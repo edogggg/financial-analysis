@@ -47,58 +47,54 @@ public class CompanyData {
     final static String incomeStatementKey = "ic";
     final static String labelKey ="label";
     final static String valueKey =  "value";
-    final static String symbolKey = "symbol";
     final static String descriptionKey = "description";
     final static String urlInitial = "https://finnhub.io/api/v1/stock/";
     final static String symbolURL = "symbol?exchange=";
+    final static String peerURLPart = "peers?symbol=";
     final static String metricURL = "metric?symbol=";
     final static String metricURL2 = "&metric=all";
     final static String financialsReported = "financials-reported?symbol=";
     final static String financialsFrequency = "&freq=quarterly";
     final static String apiKey = "&token=bqsjk1frh5rc3vfds0ug";
-    final static String errorMessage = "Sorry, no metric available";
+    final static Double toPercent = 100.00;
 
-    public static ObservableList<Map<String, String>> metrics(ArrayList<String> tickers, ArrayList<String> keys) throws IOException {
+    public static ObservableList<Map> metrics(ArrayList<String> tickers) throws IOException {
 
 //Returned observable list
-        ObservableList<Map<String, String>> metricList = FXCollections.observableArrayList();
+        ObservableList<Map> metricList = FXCollections.observableArrayList();
 
 //Iterating through the urls by ticker
             for (String ticker : tickers) {
                 String earningsURL = urlInitial + metricURL + ticker + metricURL2 + apiKey;
                 JSONObject metricOBJ = new JSONObject(readUrl(earningsURL));
-                String quarterlyURL = urlInitial + financialsReported + ticker + financialsFrequency + apiKey;
-                JSONObject quarterlyOBJ = new JSONObject(readUrl(quarterlyURL));
+//                String quarterlyURL = urlInitial + financialsReported + ticker + financialsFrequency + apiKey;
+//                JSONObject quarterlyOBJ = new JSONObject(readUrl(quarterlyURL));
 
-//Creating the hashmap and adding the first column in the row; ticker
-                Map<String, String> dataRow = new HashMap<>();
-                String companySymbol = metricOBJ.getString(symbolKey);
-                companySymbol.toUpperCase();
-                dataRow.put(symbolKey, companySymbol);
+//Creating the data row for the ticker data
+ //               Map<String, String> stringRow = new HashMap<>();
+//                adding the first column in the row; ticker
 
 //Retrieving the metric object
                 JSONObject metric = metricOBJ.getJSONObject(jSONObjectKeyMetric);
-                JSONArray dataArray = quarterlyOBJ.getJSONArray(jSONArrayKeyData);
+//                JSONArray dataArray = quarterlyOBJ.getJSONArray(jSONArrayKeyData);
 
-//Iterating through the keys and assigning values to them in the map
-                for (String key : keys) {
-                    Double metricVal = metric.optDouble(key);
-                    metricVal = rounding(metricVal);
-                    dataRow.put(key, String.valueOf(metricVal));
-                }
+////Iterating through the keys and assigning values to them in the map
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////// ITERATE THROUGH THE ARRAY OBJECT AND RETRIEVE EACH OBJECTS KEYS/VALS ////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                for (int i = 0; i < dataArray.length(); i++){ //change this to enhanced for loop if you wish
-                    JSONObject metricObject = dataArray.getJSONObject(i);
-                    JSONArray metricObjectKeys = metricObject.names();
-                    for (int j = 0; j < metricObjectKeys.length(); j++) { //change this to enhanced for loop if you wish
-                    String metKey = metricObjectKeys.getString (j); //this is the key (looped)
-                    String metValue = metricObject.getString (metKey); //this is the value (looped)
-                    }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
+                String companySymbol = metricOBJ.getString(StockTable.symbolKey);
+                Map doubleData = new HashMap<>();
+                doubleData.put(StockTable.symbolKey, companySymbol);
+                doubleData.put(StockTable.pEKey, getMetric(StockTable.pEKey, metric));
+                doubleData.put(StockTable.currentRatioKey, getMetric(StockTable.currentRatioKey, metric));
+                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+//                doubleData.put(StockTable.fCFKey, getMetric(StockTable.fCFKey, metric));
+
+                doubleData.put(StockTable.deltaKey, deltaOfTheDeltaMetric(metric));
+                doubleData.put(StockTable.divCoverKey, dividendCoverTTM(metric));
 
 
 
@@ -111,23 +107,27 @@ public class CompanyData {
 //                        element.toString()
 //
 //                        String metricVal = metric.optString(String.valueOf(element));
-//                        dataRow.put(key, String.valueOf(metricVal));
+//                        stringRow.put(key, String.valueOf(metricVal));
 //                    }
 
 //                    JSONArray cashFlow = reportOBJ.getJSONArray(cashFlowKey);
 //                    JSONArray incomeStatement = reportOBJ.getJSONArray(incomeStatementKey);
 
 
-                }
-                dataRow.put("dividendCover", dividendCoverTTM(metric));
+//                }
 
 
 //Adding a row to the observable list
-                metricList.add(dataRow);
+                metricList.add(doubleData);
             }
 //        }
         return metricList;
     }
+//    public static JSONArray getPeers(ArrayList<String> peersRequest) throws IOException {
+//        String peersURL = urlInitial + peerURLPart + peersRequest + apiKey;
+//        JSONArray peersArray = new JSONArray(readUrl(peersURL));
+//        return peersArray;
+//    }
 //    public static boolean tickerChecker (String ticker) {
 //        if
 //        String tickersURL = urlInitial + symbolURL + exchange + apiKey;
@@ -142,19 +142,34 @@ public class CompanyData {
 //        }
 //        return metricList
 //    }
-public static String dividendCoverTTM(JSONObject metric){
-    double cashPerShare = metric.optDouble("freeCashFlowPerShareTTM");
-    double divPerShare = metric.optDouble("dividendsPerShareTTM");
-    String error = "No dividend";
-    if (divPerShare == 0){
-       return error;
-    } else {
-        double divCover = cashPerShare / divPerShare;
-        return String.valueOf(rounding(divCover));
-    }
-}
 
-public static Double rounding(double metric){
+    public static Double getMetric(String key, JSONObject metric){
+        Double metricVal = metric.optDouble(key);
+//        metricVal = rounding(metricVal);
+        return metricVal;
+    }
+
+public static Double dividendCoverTTM(JSONObject metric){
+    Double cashPerShare = metric.optDouble("freeCashFlowPerShareTTM");
+    Double divPerShare = metric.optDouble("dividendsPerShareTTM");
+    return cashPerShare / divPerShare;
+}
+    public static Double deltaOfTheDeltaMetric(JSONObject metric){
+        Double epsNormalizedAnnual = metric.optDouble("epsNormalizedAnnual");
+        Double epsGrowthTTMYoy = metric.optDouble("epsGrowthTTMYoy");
+        Double peNormalizedAnnual = metric.optDouble(" peNormalizedAnnual");
+
+        Double oneYearPredictedEPS = (epsNormalizedAnnual * (epsGrowthTTMYoy / toPercent)) + (epsNormalizedAnnual);
+        Double twoYearPredictedEPS = (oneYearPredictedEPS * (epsGrowthTTMYoy / toPercent)) + (oneYearPredictedEPS);
+        Double threeYearPredictedEPS = (twoYearPredictedEPS * (epsGrowthTTMYoy / toPercent)) + (twoYearPredictedEPS);
+        Double fourYearPredictedEPS = (threeYearPredictedEPS * (epsGrowthTTMYoy / toPercent)) + (threeYearPredictedEPS);
+        Double fiveYearPredictedEPS = (fourYearPredictedEPS * (epsGrowthTTMYoy / toPercent)) + (fourYearPredictedEPS);
+
+        return oneYearPredictedEPS * peNormalizedAnnual;
+    }
+
+
+public static Double rounding(Double metric){
     BigDecimal bd = BigDecimal.valueOf(metric);
     bd = bd.setScale(2, RoundingMode.HALF_UP);
     return bd.doubleValue();

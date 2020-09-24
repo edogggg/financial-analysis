@@ -4,74 +4,89 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.MapValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Callback;
-import javafx.util.StringConverter;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-
-
 
 public class StockTable {
 
     public static ArrayList<String> tickers = new ArrayList<>();
-    public static ArrayList<String> metric = new ArrayList<>();
+
+    public static final String symbolKey = "symbol";
+    public static final String pEKey = "peExclExtraTTM";
+    public static final String divCoverKey = "dividendCover";
+    public static final String currentRatioKey = "currentRatioAnnual";
+    public static final String fCFKey = "freeCashFlowPerShareTTM";
+
+    public static final String deltaKey = "deltaOfTheDelta";
+
+//    public static final String bookValKey = "bookValuePerShareQuarterly";
+//    public static final String bookValueShareGrowth5YKey = "bookValueShareGrowth5Y";
+//    public static final String cashFlowPerShareTTM = "cashFlowPerShareTTM";
+//    public static final String costToCashReturn = "currentEv/freeCashFlowTTM";
+//    public static final String dividendGrowthRate5Y = "dividendGrowthRate5Y";
+//    public static final String
+//    public static final String
+//    public static final String
+//    public static final String
+//    public static final String
 
     public static TableView<String> stockTable() throws IOException {
 
-//        These are the column names and where the keys are passed into the map
-        //for ('keys'  iterate keys) { add table column }
-//        This is where the keys are passed into the map
         tickers.add("AAPL");
-        tickers.add("AMZN");
-        tickers.add("III");
+        tickers.add("uber");
 
+//        tickers.add("AMZN");
+//        tickers.add("III");
+//        tickers.add("FB");
+//        tickers.add("MSFT");
+//        tickers.add("GOOGl");
+//        tickers.add("tsla");
+//        tickers.add("NFLX");
+
+
+
+        TableView table_view = new TableView<>(CompanyData.metrics(tickers));
         TableColumn<Map, String> symbol = new TableColumn<>("Symbol");
-        String sym = "symbol";
         symbol.setCellValueFactory(
-                new MapValueFactory<>(sym)
+                new MapValueFactory<>(symbolKey)
         );
-        TableColumn<Map, String> pERatio = new TableColumn<>("P/E");
-        String pEKey = "peNormalizedAnnual";
-        metric.add(pEKey);
+        table_view.getColumns().add(symbol);
+
+        TableColumn<Map, Double> pERatio = new TableColumn<>("P/E");
         pERatio.setCellValueFactory(
                 new MapValueFactory<>(pEKey)
         );
-        TableColumn<Map, String> dividendCover = new TableColumn<>("Dividend cover(TTM)");
-        //        This generates the table and calls the generate data method
-        String divCover = "dividendCover";
-        metric.add(divCover);
+        table_view.getColumns().add(pERatio);
+
+        TableColumn<Map, Double> dividendCover = new TableColumn<>("Dividend cover(TTM)");
         dividendCover.setCellValueFactory(
-                new MapValueFactory<>(divCover)
+                new MapValueFactory<>(divCoverKey)
         );
-        TableColumn<Map, String> currentRatio = new TableColumn<>("Current Ratio (Annual)");
-        String currentR = "currentRatioAnnual";
-        metric.add(currentR);
+        table_view.getColumns().add(dividendCover);
+
+        TableColumn<Map, Double> deltaOfDelta = new TableColumn<>("Delta of the Delta");
+        deltaOfDelta.setCellValueFactory(
+                new MapValueFactory<>(deltaKey)
+        );
+        table_view.getColumns().add(deltaOfDelta);
+
+        TableColumn<Map, Double> currentRatio = new TableColumn<>("Current Ratio (Annual)");
         currentRatio.setCellValueFactory(
-                new MapValueFactory<>(currentR)
+                new MapValueFactory<>(currentRatioKey)
         );
-//        TableColumn<Map, String> currentRatio = new TableColumn<>("Current Ratio (Annual)");
-//        String currentR = "currentRatioAnnual";
-//        metric.add(currentR);
-//        currentRatio.setCellValueFactory(
-//                new MapValueFactory<>(currentR)
-//        );
+        table_view.getColumns().add(currentRatio);
+
+        TableColumn<Map, Double> freeCashFlow = new TableColumn<>("FCFlow per share (TTM)");
+        freeCashFlow.setCellValueFactory(
+                new MapValueFactory<>(fCFKey)
+        );
+        table_view.getColumns().add(freeCashFlow);
 
 
-
-
-
-        TableView table_view = new TableView<>(CompanyData.metrics(tickers, metric));
-
-//          Adds columns
-        table_view.getColumns().addAll(symbol, pERatio, dividendCover, currentRatio );
-
+//          Adds columns##### possibly remove all and add items to refresh page??
         return table_view;
     }
 
@@ -101,8 +116,12 @@ public class StockTable {
 
         Button getMetrics = new Button("Get metrics");
         getMetrics.setOnAction(action -> {
-            metric.add(tickerInput.getText());
-
+            tickers.add(tickerInput.getText());
+            try {
+                stockTable().refresh();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
         HBox hbox = new HBox(tickerInput, getMetrics);
         VBox vbox = new VBox(stockTable(), hbox);
